@@ -1,0 +1,339 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SAFE-MCP Security Analysis API",
+    "description": "Analyzes MCP tool/server definitions and agent architectures against the SAFE-MCP threat framework (85 techniques, 54 mitigations, 32 detection rules).",
+    "version": "1.0.0",
+    "contact": { "name": "SAFE-MCP Skill" },
+    "license": { "name": "ISC" }
+  },
+  "servers": [
+    { "url": "http://127.0.0.1:3001", "description": "Local development" }
+  ],
+  "paths": {
+    "/v1/analyze/architecture": {
+      "post": {
+        "operationId": "analyzeArchitecture",
+        "summary": "Analyze agent architecture",
+        "description": "Run a full SAFE-MCP security analysis on an agent architecture. Returns risk summary, matched techniques, and recommended mitigations.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgentArchitecture" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnalysisResult" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/analyze/tool": {
+      "post": {
+        "operationId": "analyzeTool",
+        "summary": "Analyze a single MCP tool",
+        "description": "Analyze a single MCP tool definition for security risks.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ToolDefinition" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnalysisResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/analyze/server": {
+      "post": {
+        "operationId": "analyzeServer",
+        "summary": "Analyze an MCP server",
+        "description": "Analyze an MCP server definition (with its tools) for security risks.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ServerDefinition" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnalysisResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/techniques/{id}": {
+      "get": {
+        "operationId": "getTechnique",
+        "summary": "Get technique details",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "example": "SAFE-T1001" }
+        ],
+        "responses": {
+          "200": { "description": "Technique details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Technique" } } } },
+          "404": { "description": "Not found" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/mitigations/{id}": {
+      "get": {
+        "operationId": "getMitigation",
+        "summary": "Get mitigation details",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "example": "SAFE-M-1" }
+        ],
+        "responses": {
+          "200": { "description": "Mitigation details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Mitigation" } } } },
+          "404": { "description": "Not found" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/techniques": {
+      "get": {
+        "operationId": "searchTechniques",
+        "summary": "Search techniques",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search keyword" },
+          { "name": "severity", "in": "query", "schema": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] } },
+          { "name": "tactic", "in": "query", "schema": { "type": "string" }, "description": "Tactic ID filter" }
+        ],
+        "responses": {
+          "200": { "description": "Matching techniques", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TechniqueSummary" } } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/mitigations": {
+      "get": {
+        "operationId": "searchMitigations",
+        "summary": "Search mitigations",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search keyword" }
+        ],
+        "responses": {
+          "200": { "description": "Matching mitigations", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/MitigationSummary" } } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/threat-profile": {
+      "get": {
+        "operationId": "getThreatProfile",
+        "summary": "Get SAFE-MCP threat profile",
+        "responses": {
+          "200": { "description": "Threat profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ThreatProfile" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/framework/stats": {
+      "get": {
+        "operationId": "getFrameworkStats",
+        "summary": "Get framework statistics",
+        "responses": {
+          "200": { "description": "Framework stats", "content": { "application/json": { "schema": { "type": "object" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health check",
+        "security": [],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string" }, "version": { "type": "string" }, "apiVersion": { "type": "string" } } } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request body",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+      },
+      "Forbidden": {
+        "description": "Access denied",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+      }
+    },
+    "schemas": {
+      "ToolDefinition": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "inputSchema": { "type": "object", "additionalProperties": true },
+          "annotations": { "type": "object", "additionalProperties": true },
+          "parameters": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ServerDefinition": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "transport": { "type": "string", "enum": ["stdio", "sse", "http", "websocket"] },
+          "authentication": { "type": "string" },
+          "tools": { "type": "array", "items": { "$ref": "#/components/schemas/ToolDefinition" } },
+          "permissions": { "type": "array", "items": { "type": "string" } },
+          "exposedEndpoints": { "type": "array", "items": { "type": "string" } },
+          "oauthConfig": {
+            "type": "object",
+            "properties": {
+              "scopes": { "type": "array", "items": { "type": "string" } },
+              "callbackUrls": { "type": "array", "items": { "type": "string" } },
+              "authorizationServer": { "type": "string" }
+            }
+          }
+        }
+      },
+      "AgentArchitecture": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "servers": { "type": "array", "items": { "$ref": "#/components/schemas/ServerDefinition" } },
+          "tools": { "type": "array", "items": { "$ref": "#/components/schemas/ToolDefinition" } },
+          "multiAgent": { "type": "boolean" },
+          "sharedMemory": { "type": "boolean" },
+          "vectorStore": { "type": "boolean" },
+          "ragPipeline": { "type": "boolean" },
+          "multimodal": { "type": "boolean" },
+          "cliAccess": { "type": "boolean" },
+          "fileSystemAccess": { "type": "boolean" },
+          "networkAccess": { "type": "boolean" },
+          "oauthFlows": { "type": "boolean" }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "ruleId": { "type": "string" },
+          "severity": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+          "technique": {
+            "type": "object",
+            "properties": { "id": { "type": "string" }, "name": { "type": "string" } }
+          },
+          "description": { "type": "string" },
+          "evidence": { "type": "string" },
+          "mitigations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "effectiveness": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "RiskSummary": {
+        "type": "object",
+        "properties": {
+          "overallRisk": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+          "totalFindings": { "type": "integer" },
+          "bySeverity": { "type": "object", "additionalProperties": { "type": "integer" } },
+          "coverageScore": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      },
+      "AnalysisResult": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "target": { "type": "string" },
+          "summary": { "$ref": "#/components/schemas/RiskSummary" },
+          "findings": { "type": "array", "items": { "$ref": "#/components/schemas/Finding" } }
+        }
+      },
+      "Technique": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "tactic": { "type": "string" },
+          "tacticName": { "type": "string" },
+          "severity": { "type": "string" },
+          "description": { "type": "string" },
+          "mitigations": { "type": "array", "items": { "type": "string" } },
+          "mitreAttackMapping": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Mitigation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "category": { "type": "string" },
+          "effectiveness": { "type": "string" },
+          "description": { "type": "string" },
+          "mitigates": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "TechniqueSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "severity": { "type": "string" },
+          "tactic": { "type": "string" }
+        }
+      },
+      "MitigationSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "category": { "type": "string" },
+          "effectiveness": { "type": "string" }
+        }
+      },
+      "ThreatProfile": {
+        "type": "object",
+        "properties": {
+          "totalTechniques": { "type": "integer" },
+          "bySeverity": { "type": "object", "additionalProperties": { "type": "integer" } },
+          "mitigationCoverage": { "type": "number" },
+          "criticalTechniques": { "type": "array", "items": { "$ref": "#/components/schemas/TechniqueSummary" } }
+        }
+      }
+    }
+  }
+}

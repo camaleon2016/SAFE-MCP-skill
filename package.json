@@ -1,0 +1,36 @@
+{
+  "name": "safe-mcp-skill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "safe-mcp-skill": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && npm run copy-data",
+    "copy-data": "node -e \"const fs=require('fs');fs.cpSync('src/data','dist/data',{recursive:true});fs.cpSync('src/openapi/openapi.json','dist/openapi/openapi.json');\"",
+    "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
+    "start:rest": "node dist/openapi/serve.js",
+    "dev": "npx tsx src/index.ts",
+    "dev:http": "npx tsx src/http.ts",
+    "dev:rest": "npx tsx src/openapi/serve.ts",
+    "test": "npx tsx src/tests/redteam.ts",
+    "typecheck": "tsc --noEmit",
+    "ci": "npm run typecheck && npm run build && npm test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0"
+  }
+}

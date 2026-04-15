@@ -1,0 +1,804 @@
+{
+  "framework": {
+    "name": "SAFE-MCP",
+    "repository": "https://github.com/safe-agentic-framework/safe-mcp",
+    "totalMitigations": 47,
+    "highEffectiveness": 26,
+    "mediumHighEffectiveness": 15,
+    "mediumEffectiveness": 6,
+    "lowEffectiveness": 0
+  },
+  "categories": [
+    "Architectural Defense",
+    "Cryptographic Control",
+    "AI-Based Defense",
+    "Input Validation",
+    "Supply Chain Security",
+    "UI Security",
+    "Isolation and Containment",
+    "Detective Control",
+    "Preventive Control",
+    "Architectural Control",
+    "Data Security",
+    "Risk Management",
+    "Human Factors",
+    "Supply Chain Control"
+  ],
+  "categoryDistribution": {
+    "Detective Control": 12,
+    "Preventive Control": 7,
+    "Input Validation": 6,
+    "Cryptographic Control": 3,
+    "Architectural Defense": 2,
+    "UI Security": 3,
+    "AI-Based Defense": 2,
+    "Supply Chain Security": 4,
+    "Data Security": 2,
+    "Architectural Control": 4,
+    "Isolation and Containment": 1,
+    "Risk Management": 1,
+    "Human Factors": 1
+  },
+  "mitigations": [
+    {
+      "id": "SAFE-M-1",
+      "name": "Control/Data Flow Separation",
+      "category": "Architectural Defense",
+      "effectiveness": "High (Provable Security)",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-01-03",
+      "description": "Architectural defense that creates a protective system layer around LLMs by explicitly separating control flow (from trusted queries) from data flow (including untrusted tool descriptions). Ensures malicious instructions embedded in data cannot influence program execution. The most notable implementation is CaMeL (Control and Memory Language), developed by Google researchers, demonstrating 77% task completion with provable security guarantees.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102", "SAFE-T1401", "SAFE-T1008"],
+      "corePrinciples": [
+        "Explicit Control Flow Extraction: Parse and extract control flow from trusted sources only",
+        "Data Isolation: Treat all external inputs as pure data",
+        "Capability-Based Security: Implement fine-grained permissions for data access and flow"
+      ],
+      "benefits": [
+        "Provable Security: Mathematical guarantees against certain attack classes",
+        "Defense in Depth: Works even if underlying LLM is vulnerable",
+        "No Model Retraining: Can be applied to existing LLMs"
+      ],
+      "limitations": [
+        "Performance Impact: ~7% reduction in task completion rate",
+        "Complexity: Requires significant architectural changes",
+        "Not Universal: Some tasks may be incompatible with strict separation"
+      ],
+      "relatedMitigations": ["SAFE-M-2", "SAFE-M-3"],
+      "references": [
+        "Defeating Prompt Injections by Design - Google Research (2025) - https://arxiv.org/abs/2503.18813"
+      ]
+    },
+    {
+      "id": "SAFE-M-2",
+      "name": "Cryptographic Integrity for Tool Descriptions",
+      "category": "Cryptographic Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Ensures MCP tool descriptions cannot be tampered with by implementing digital signatures and hash verification. Tool descriptions are signed by trusted authorities, and clients verify signatures before loading any tool, preventing unauthorized modifications at any point in the supply chain.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1002", "SAFE-T1003"],
+      "implementationPhases": [
+        "Phase 1: Infrastructure Setup - Deploy CA or use existing PKI, create key management procedures, set up secure key storage (HSM recommended)",
+        "Phase 2: Tool Signing - Implement signing tools for developers, create CI/CD integration for automated signing",
+        "Phase 3: Client Verification - Update MCP clients to require signatures, implement signature verification",
+        "Phase 4: Monitoring - Log all signature verifications, alert on verification failures"
+      ],
+      "bestPractices": {
+        "do": [
+          "Use hardware security modules (HSM) for private keys",
+          "Implement certificate pinning for critical tools",
+          "Verify entire tool schema, not just descriptions",
+          "Include version information in signed content",
+          "Use timestamp servers to prove signing time"
+        ],
+        "dont": [
+          "Store private keys in version control",
+          "Use self-signed certificates in production",
+          "Skip timestamp verification",
+          "Allow signature downgrade attacks",
+          "Trust expired certificates"
+        ]
+      },
+      "relatedMitigations": ["SAFE-M-6", "SAFE-M-9"],
+      "references": [
+        "NIST SP 800-57: Key Management",
+        "NIST SP 800-204D: Software Supply Chain Security in DevSecOps",
+        "in-toto: Framework for Supply Chain Integrity",
+        "JSON Web Signature (JWS) - RFC 7515"
+      ]
+    },
+    {
+      "id": "SAFE-M-3",
+      "name": "AI-Powered Content Analysis",
+      "category": "AI-Based Defense",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Uses specialized LLMs or fine-tuned models to analyze tool descriptions and other inputs for semantic anomalies, hidden instructions, and potential prompt injection attempts before they reach production systems. Can detect novel attack patterns that signature-based systems miss.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102", "SAFE-T1401", "SAFE-T1402"],
+      "implementationApproaches": [
+        "Dedicated Security LLM: Isolated model specifically for security analysis with risk scoring",
+        "Ensemble Approach: Multiple specialized detectors (prompt injection, semantic anomaly, hidden instruction, Unicode abuse)",
+        "Fine-tuned Detection Model: Binary classifier trained on labeled safe/malicious examples"
+      ],
+      "detectionPatterns": [
+        "Semantic Analysis: Contradiction detection, role confusion, capability mismatch",
+        "Structural Analysis: Unusual formatting, hidden sections, complexity mismatches",
+        "Behavioral Prediction: Predict likely LLM behavior, identify control flow hijacking"
+      ],
+      "limitations": [
+        "False Positives: May flag legitimate complex descriptions",
+        "Computational Cost: Requires additional LLM inference",
+        "Adversarial Robustness: Attackers may craft inputs to evade detection",
+        "Context Loss: Analyzes descriptions in isolation",
+        "Model Drift: Requires regular updates as attack patterns evolve"
+      ],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-4", "SAFE-M-5"],
+      "references": [
+        "LLM01:2025 Prompt Injection - OWASP",
+        "NIST AI Risk Management Framework",
+        "Attention Tracker: Detecting Prompt Injection Attacks in LLMs (2024)"
+      ]
+    },
+    {
+      "id": "SAFE-M-4",
+      "name": "Unicode Sanitization and Filtering",
+      "category": "Input Validation",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Removes or normalizes potentially malicious Unicode characters from tool descriptions and other inputs before they reach LLMs. Filters invisible characters, bidirectional control characters, and characters from Private Use Areas that attackers use to hide malicious instructions.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102", "SAFE-T1401", "SAFE-T1402"],
+      "charactersFiltered": {
+        "invisibleCharacters": [
+          "Zero-width space (U+200B)",
+          "Zero-width non-joiner (U+200C)",
+          "Zero-width joiner (U+200D)",
+          "Word joiner (U+2060)",
+          "Zero-width no-break space (U+FEFF)"
+        ],
+        "bidirectionalControlCharacters": [
+          "Left-to-right embedding (U+202A)",
+          "Right-to-left embedding (U+202B)",
+          "Pop directional formatting (U+202C)",
+          "Left-to-right override (U+202D)",
+          "Right-to-left override (U+202E)"
+        ],
+        "privateUseAreas": [
+          "Basic Multilingual Plane: U+E000-U+F8FF",
+          "Supplementary Private Use Area-A: U+F0000-U+FFFFD",
+          "Supplementary Private Use Area-B: U+100000-U+10FFFD"
+        ],
+        "unicodeTags": [
+          "Tag characters: U+E0000-U+E007F"
+        ]
+      },
+      "sanitizationModes": [
+        "Strict: Remove all suspicious characters (recommended)",
+        "Normalize: Replace with visible markers for debugging",
+        "Log-only: Detect and log but don't modify"
+      ],
+      "limitations": [
+        "May break legitimate internationalization features",
+        "Cannot detect all encoding-based attacks",
+        "Performance impact on large texts",
+        "Some attacks use allowed characters creatively"
+      ],
+      "relatedMitigations": ["SAFE-M-5", "SAFE-M-7"],
+      "references": [
+        "Unicode Security Considerations (Unicode.org) - https://www.unicode.org/reports/tr36/",
+        "Invisible Prompt Injection Research - https://www.promptfoo.dev/blog/invisible-unicode-threats/",
+        "OWASP Input Validation Cheat Sheet"
+      ]
+    },
+    {
+      "id": "SAFE-M-5",
+      "name": "Content Sanitization",
+      "category": "Input Validation",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Filters MCP-related content (tool descriptions, tool outputs, error messages, and other data) to remove hidden content and instruction patterns using pattern-based detection combined with structural analysis. Note: pattern-based filtering alone is insufficient and should be combined with other mitigations.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-3", "SAFE-M-4"],
+      "references": [
+        "OWASP Input Validation Cheat Sheet"
+      ]
+    },
+    {
+      "id": "SAFE-M-6",
+      "name": "Tool Registry Verification",
+      "category": "Supply Chain Security",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Ensures MCP servers are only installed from verified sources with cryptographic signatures, implementing a trusted registry system similar to package managers like npm or Docker Hub.",
+      "mitigates": ["SAFE-T1002", "SAFE-T1003", "SAFE-T1004"],
+      "relatedMitigations": ["SAFE-M-2", "SAFE-M-9"],
+      "references": [
+        "The Update Framework (TUF) - https://theupdateframework.io/",
+        "SLSA Supply Chain Security Framework - https://slsa.dev/"
+      ]
+    },
+    {
+      "id": "SAFE-M-7",
+      "name": "Content Rendering Parity",
+      "category": "UI Security",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Ensures displayed content matches content sent to the LLM, preventing attackers from hiding malicious instructions that are invisible to users but processed by the model.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-4", "SAFE-M-8"]
+    },
+    {
+      "id": "SAFE-M-8",
+      "name": "Visual Validation",
+      "category": "UI Security",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low",
+      "firstPublished": "2025-01-03",
+      "description": "Compare visual rendering of descriptions with actual content to detect invisible characters. Helps identify Unicode-based injection attempts.",
+      "mitigates": ["SAFE-T1001"],
+      "relatedMitigations": ["SAFE-M-4", "SAFE-M-7"],
+      "references": [
+        "Promptfoo Research on invisible Unicode threats"
+      ]
+    },
+    {
+      "id": "SAFE-M-9",
+      "name": "Sandboxed Testing",
+      "category": "Isolation and Containment",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-01-03",
+      "description": "Test new MCP tools in isolated environments with comprehensive monitoring before production deployment, allowing detection of malicious behavior without risk to production systems.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1003", "SAFE-T1201"],
+      "relatedMitigations": ["SAFE-M-6", "SAFE-M-11"],
+      "references": [
+        "NIST SP 800-53 Rev. 5 - SC-39: Process Isolation",
+        "NSA/CISA Kubernetes Hardening Guidance",
+        "CIS Docker Benchmark v1.6.0",
+        "MITRE D3FEND - Execution Isolation"
+      ]
+    },
+    {
+      "id": "SAFE-M-10",
+      "name": "Automated Scanning",
+      "category": "Detective Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Regularly scan tool descriptions for known malicious patterns and hidden content using automated tools.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-11", "SAFE-M-12"]
+    },
+    {
+      "id": "SAFE-M-11",
+      "name": "Behavioral Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-01-03",
+      "description": "Tracks LLM behavior patterns to detect unexpected tool usage, suspicious sequences of operations, or deviations from normal behavior that may indicate compromise or attack. Includes monitoring for prompt injection signs such as sudden context switches, execution of unrelated commands, or acknowledgment of instructions not visible in the original user request.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1101", "SAFE-T1102", "SAFE-T1701"],
+      "relatedMitigations": ["SAFE-M-10", "SAFE-M-12"],
+      "references": [
+        "MITRE CAR - Cyber Analytics Repository",
+        "Large Language Models for Forecasting and Anomaly Detection (2024)",
+        "MITRE - Finding Cyber Threats with ATT&CK-Based Analytics"
+      ]
+    },
+    {
+      "id": "SAFE-M-12",
+      "name": "Audit Logging",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Log all tool descriptions loaded and their full content, along with all tool invocations, parameters, and results for forensic analysis and anomaly detection.",
+      "mitigates": ["SAFE-T1001", "SAFE-T1004"],
+      "relatedMitigations": ["SAFE-M-10", "SAFE-M-11"]
+    },
+    {
+      "id": "SAFE-M-13",
+      "name": "OAuth Flow Verification",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-01-06",
+      "description": "Implement protocol-level verification of OAuth authorization servers and callback URLs to prevent OAuth phishing attacks through malicious MCP servers. Includes RFC 9207 Authorization Server Issuer Identification validation.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-14", "SAFE-M-16", "SAFE-M-17"],
+      "references": [
+        "RFC 9207 - OAuth 2.0 Authorization Server Issuer Identification",
+        "OAuth 2.0 Security Best Current Practice - IETF Draft"
+      ]
+    },
+    {
+      "id": "SAFE-M-14",
+      "name": "Server Allowlisting",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Maintain and enforce a list of trusted MCP server domains to prevent connections to malicious servers. Reject OAuth flows to non-allowlisted domains regardless of configuration.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1004", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-13"]
+    },
+    {
+      "id": "SAFE-M-15",
+      "name": "User Warning Systems",
+      "category": "Preventive Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Display clear warnings when OAuth flows are initiated, showing the requesting server and target service. Show full URL with visual indicators for security-critical characters.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-13", "SAFE-M-14"]
+    },
+    {
+      "id": "SAFE-M-16",
+      "name": "Token Scope Limiting",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Enforce minimal OAuth scopes and warn on broad permission requests. Follow principle of least privilege for token permissions.",
+      "mitigates": ["SAFE-T1007"],
+      "relatedMitigations": ["SAFE-M-13", "SAFE-M-17"]
+    },
+    {
+      "id": "SAFE-M-17",
+      "name": "Callback URL Restrictions",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Validate that OAuth callback URLs match the configured MCP server domain. Enforce strict redirect URI matching and reject wildcards and open redirects.",
+      "mitigates": ["SAFE-T1007"],
+      "relatedMitigations": ["SAFE-M-13", "SAFE-M-14"]
+    },
+    {
+      "id": "SAFE-M-18",
+      "name": "OAuth Flow Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Log and analyze all OAuth authorization attempts through MCP, including full URLs, issuer parameters, and certificate details.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-19", "SAFE-M-20"]
+    },
+    {
+      "id": "SAFE-M-19",
+      "name": "Token Usage Tracking",
+      "category": "Detective Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-06",
+      "description": "Monitor usage patterns of OAuth tokens obtained through MCP to identify potentially compromised tokens.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-18", "SAFE-M-20"]
+    },
+    {
+      "id": "SAFE-M-20",
+      "name": "Anomaly Detection",
+      "category": "Detective Control",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-01-06",
+      "description": "Deploy behavioral analytics to detect unusual OAuth patterns such as first-seen domains, geographic anomalies, or multiple AS configurations. Identify unusual patterns in OAuth requests across MCP servers.",
+      "mitigates": ["SAFE-T1007", "SAFE-T1004", "SAFE-T1009"],
+      "relatedMitigations": ["SAFE-M-18", "SAFE-M-19"]
+    },
+    {
+      "id": "SAFE-M-21",
+      "name": "Output Context Isolation",
+      "category": "Architectural Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-01-03",
+      "description": "Isolate tool output contexts to prevent cross-contamination between tool results and system instructions.",
+      "mitigates": ["SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-22"]
+    },
+    {
+      "id": "SAFE-M-22",
+      "name": "Semantic Output Validation",
+      "category": "Input Validation",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Validate tool outputs for semantic consistency and hidden instructions before they are processed by the LLM.",
+      "mitigates": ["SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-21", "SAFE-M-23"]
+    },
+    {
+      "id": "SAFE-M-23",
+      "name": "Tool Output Truncation",
+      "category": "Preventive Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low",
+      "firstPublished": "2025-01-03",
+      "description": "Truncate tool outputs to prevent oversized payloads from being processed, reducing the attack surface for output-based injection.",
+      "mitigates": ["SAFE-T1102"],
+      "relatedMitigations": ["SAFE-M-21", "SAFE-M-22"]
+    },
+    {
+      "id": "SAFE-M-24",
+      "name": "SBOM Generation and Verification",
+      "category": "Supply Chain Security",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Generate and verify Software Bill of Materials (SBOM) for MCP packages and dependencies to maintain comprehensive inventory and detect unauthorized components.",
+      "mitigates": ["SAFE-T1002", "SAFE-T1003"],
+      "relatedMitigations": ["SAFE-M-6", "SAFE-M-2"]
+    },
+    {
+      "id": "SAFE-M-25",
+      "name": "AI-Specific Risk Modeling",
+      "category": "Risk Management",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Model AI-specific risks in MCP deployments, incorporating threat modeling tailored to LLM and agent-based systems.",
+      "mitigates": [],
+      "relatedMitigations": ["SAFE-M-26"]
+    },
+    {
+      "id": "SAFE-M-26",
+      "name": "Data Provenance Tracking",
+      "category": "Data Security",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-01-03",
+      "description": "Track and verify the provenance of data flowing through MCP tools to ensure data integrity and detect unauthorized modifications.",
+      "mitigates": [],
+      "relatedMitigations": ["SAFE-M-33", "SAFE-M-24"]
+    },
+    {
+      "id": "SAFE-M-27",
+      "name": "Social Engineering Awareness Training",
+      "category": "Human Factors",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low",
+      "firstPublished": "2025-01-03",
+      "description": "Train users to recognize social engineering attacks targeting MCP installations, including phishing attempts to install malicious MCP servers.",
+      "mitigates": ["SAFE-T1006"],
+      "relatedMitigations": ["SAFE-M-15"]
+    },
+    {
+      "id": "SAFE-M-28",
+      "name": "Pre-Authentication Tool Concealment",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Conceal tool capabilities until proper authentication is established, preventing unauthorized tool discovery and enumeration.",
+      "mitigates": ["SAFE-T1601", "SAFE-T1602"],
+      "relatedMitigations": ["SAFE-M-29"]
+    },
+    {
+      "id": "SAFE-M-29",
+      "name": "Explicit Privilege Boundaries",
+      "category": "Architectural Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-01-03",
+      "description": "Define and enforce explicit privilege boundaries for MCP tools and servers, limiting blast radius if a spoofed or compromised endpoint is accepted.",
+      "mitigates": ["SAFE-T1004", "SAFE-T1104", "SAFE-T1302"],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-42"]
+    },
+    {
+      "id": "SAFE-M-30",
+      "name": "Vector Store Integrity Verification",
+      "category": "Cryptographic Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-07-01",
+      "description": "Cryptographically verify the integrity of vector store contents to detect unauthorized modifications or contamination of long-term AI agent memory.",
+      "mitigates": ["SAFE-T2106", "SAFE-T1204"],
+      "relatedMitigations": ["SAFE-M-32", "SAFE-M-2"]
+    },
+    {
+      "id": "SAFE-M-31",
+      "name": "OAuth Token Validation",
+      "category": "Input Validation",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Validate OAuth tokens with improved code quality and type safety to prevent token-based attacks.",
+      "mitigates": ["SAFE-T1202", "SAFE-T1506"],
+      "relatedMitigations": ["SAFE-M-13", "SAFE-M-16"]
+    },
+    {
+      "id": "SAFE-M-32",
+      "name": "Continuous Vector Store Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-07-01",
+      "description": "Continuously monitor vector stores for contamination and unauthorized modifications that could affect AI agent behavior across sessions.",
+      "mitigates": ["SAFE-T2106", "SAFE-T1204"],
+      "relatedMitigations": ["SAFE-M-30", "SAFE-M-11"]
+    },
+    {
+      "id": "SAFE-M-33",
+      "name": "Training Data Provenance Verification",
+      "category": "Data Security",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-06-01",
+      "description": "Verify the provenance and integrity of training data used for AI models in MCP tools to prevent training data poisoning attacks.",
+      "mitigates": ["SAFE-T2107"],
+      "relatedMitigations": ["SAFE-M-26", "SAFE-M-34"]
+    },
+    {
+      "id": "SAFE-M-34",
+      "name": "AI Model Integrity Validation",
+      "category": "Cryptographic Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-06-01",
+      "description": "Validate AI model integrity through cryptographic checksums and signatures to detect tampering or unauthorized model replacement.",
+      "mitigates": ["SAFE-T2107"],
+      "relatedMitigations": ["SAFE-M-33", "SAFE-M-2"]
+    },
+    {
+      "id": "SAFE-M-35",
+      "name": "Adversarial Training Data Detection",
+      "category": "AI-Based Defense",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-06-01",
+      "description": "Detect adversarial manipulations in training data using AI-based analysis to identify poisoned samples before they affect model behavior.",
+      "mitigates": ["SAFE-T2107"],
+      "relatedMitigations": ["SAFE-M-33", "SAFE-M-36"]
+    },
+    {
+      "id": "SAFE-M-36",
+      "name": "Model Behavior Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-06-01",
+      "description": "Monitor AI model behavior for deviations indicating poisoning or compromise, including statistical analysis of model outputs over time.",
+      "mitigates": ["SAFE-T2107"],
+      "relatedMitigations": ["SAFE-M-35", "SAFE-M-11"]
+    },
+    {
+      "id": "SAFE-M-37",
+      "name": "Metadata Sanitization",
+      "category": "Input Validation",
+      "effectiveness": "High",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Sanitize tool metadata to remove or flag suspicious properties that could be used for defense evasion or manipulation attacks.",
+      "mitigates": ["SAFE-T1406"],
+      "relatedMitigations": ["SAFE-M-38", "SAFE-M-4"]
+    },
+    {
+      "id": "SAFE-M-38",
+      "name": "Schema Validation",
+      "category": "Input Validation",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Validate tool schemas against expected patterns and structures to detect anomalies or malicious modifications.",
+      "mitigates": ["SAFE-T1406", "SAFE-T1501"],
+      "relatedMitigations": ["SAFE-M-37", "SAFE-M-5"]
+    },
+    {
+      "id": "SAFE-M-39",
+      "name": "Prompt Context Validation",
+      "category": "Architectural Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Validate prompt context integrity before processing to detect context manipulation or injection attempts.",
+      "mitigates": ["SAFE-T1102", "SAFE-T1401"],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-21"]
+    },
+    {
+      "id": "SAFE-M-40",
+      "name": "Clear UI Patterns",
+      "category": "UI Security",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Low-Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Implement clear UI patterns to help users identify security-relevant actions, reducing consent fatigue and improving user awareness of risks.",
+      "mitigates": ["SAFE-T1403", "SAFE-T1404"],
+      "relatedMitigations": ["SAFE-M-7", "SAFE-M-8", "SAFE-M-15"]
+    },
+    {
+      "id": "SAFE-M-41",
+      "name": "Tool and Package Pinning",
+      "category": "Supply Chain Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Low",
+      "firstPublished": "2025-08-01",
+      "description": "Pin tool and package versions to prevent unauthorized updates, protecting against rug pull attacks and supply chain compromise via auto-update mechanisms.",
+      "mitigates": ["SAFE-T1201", "SAFE-T1207", "SAFE-T1002"],
+      "relatedMitigations": ["SAFE-M-6", "SAFE-M-2", "SAFE-M-45"]
+    },
+    {
+      "id": "SAFE-M-42",
+      "name": "Cross-Server Protection",
+      "category": "Architectural Control",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-08-01",
+      "description": "Implement protections against cross-server attacks and tool interference, ensuring tool isolation between different MCP server instances.",
+      "mitigates": ["SAFE-T1008", "SAFE-T1301", "SAFE-T1701"],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-29"]
+    },
+    {
+      "id": "SAFE-M-43",
+      "name": "Steganography Scanner",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-08-01",
+      "description": "Scan for steganographic content in tool descriptions and outputs, including zero-width characters, HTML comments, and other encoding techniques used to hide malicious instructions.",
+      "mitigates": ["SAFE-T1402", "SAFE-T1001"],
+      "relatedMitigations": ["SAFE-M-4", "SAFE-M-10"]
+    },
+    {
+      "id": "SAFE-M-44",
+      "name": "Behavioural Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-08-01",
+      "description": "Advanced behavioral monitoring specifically for MCP tool and server activities, complementing general behavioral monitoring with MCP-specific patterns.",
+      "mitigates": ["SAFE-T1008", "SAFE-T1301"],
+      "relatedMitigations": ["SAFE-M-11", "SAFE-M-12"]
+    },
+    {
+      "id": "SAFE-M-45",
+      "name": "Tool Manifest Signing & Server Attestation",
+      "category": "Supply Chain Security",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-09-01",
+      "description": "Validate server identity and manifest integrity before accepting tools. Combines cryptographic signing of tool manifests with server attestation to ensure both the server and its tools are authentic.",
+      "mitigates": ["SAFE-T1004", "SAFE-T1003", "SAFE-T1205"],
+      "relatedMitigations": ["SAFE-M-2", "SAFE-M-6"]
+    },
+    {
+      "id": "SAFE-M-46",
+      "name": "Bridge Risk Management",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-09-01",
+      "description": "Manage risks associated with cross-chain bridge operations, including monitoring bridge contracts, validating cross-chain messages, and implementing rate limits on transfers.",
+      "mitigates": ["SAFE-T1915"],
+      "relatedMitigations": ["SAFE-M-47", "SAFE-M-48"]
+    },
+    {
+      "id": "SAFE-M-47",
+      "name": "Cross-Chain Transaction Graph Analysis",
+      "category": "Detective Control",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-09-01",
+      "description": "Analyze cross-chain transaction graphs for suspicious patterns indicative of laundering or asset obfuscation through bridges and DEXs.",
+      "mitigates": ["SAFE-T1915"],
+      "relatedMitigations": ["SAFE-M-46", "SAFE-M-48"]
+    },
+    {
+      "id": "SAFE-M-48",
+      "name": "Custodial Off-Ramp Monitoring",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-09-01",
+      "description": "Monitor custodial off-ramp activities for suspicious transactions that may indicate laundered or stolen funds being converted to fiat currency.",
+      "mitigates": ["SAFE-T1915"],
+      "relatedMitigations": ["SAFE-M-46", "SAFE-M-47"]
+    },
+    {
+      "id": "SAFE-M-49",
+      "name": "Multimodal Input Scanning",
+      "category": "Input Validation",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-07-01",
+      "description": "Scan multimodal inputs (images, audio) for embedded malicious instructions before they are processed by multimodal AI models.",
+      "mitigates": ["SAFE-T1110"],
+      "relatedMitigations": ["SAFE-M-50", "SAFE-M-52"]
+    },
+    {
+      "id": "SAFE-M-50",
+      "name": "Multimodal Content Isolation",
+      "category": "Architectural Defense",
+      "effectiveness": "High",
+      "implementationComplexity": "High",
+      "firstPublished": "2025-07-01",
+      "description": "Isolate multimodal content processing from instruction execution to prevent cross-modal prompt injection attacks.",
+      "mitigates": ["SAFE-T1110"],
+      "relatedMitigations": ["SAFE-M-1", "SAFE-M-49"]
+    },
+    {
+      "id": "SAFE-M-51",
+      "name": "Embedding Anomaly Detection",
+      "category": "AI-Based Defense",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-07-01",
+      "description": "Detect anomalies in embedding patterns that may indicate tool shadowing, content injection, or other manipulation attempts.",
+      "mitigates": ["SAFE-T1110", "SAFE-T1008"],
+      "relatedMitigations": ["SAFE-M-3", "SAFE-M-44"]
+    },
+    {
+      "id": "SAFE-M-52",
+      "name": "Input Validation Pipeline",
+      "category": "Preventive Control",
+      "effectiveness": "High",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-07-01",
+      "description": "Multi-stage input validation pipeline for comprehensive threat detection across all input types and modalities. Validates tool descriptions and metadata for suspicious patterns before registration.",
+      "mitigates": ["SAFE-T1110", "SAFE-T1008"],
+      "relatedMitigations": ["SAFE-M-4", "SAFE-M-5", "SAFE-M-49"]
+    },
+    {
+      "id": "SAFE-M-53",
+      "name": "Multimodal Watermarking",
+      "category": "Detective Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Medium",
+      "firstPublished": "2025-07-01",
+      "description": "Apply watermarking to multimodal content for provenance tracking and tamper detection.",
+      "mitigates": ["SAFE-T1110"],
+      "relatedMitigations": ["SAFE-M-26", "SAFE-M-54"]
+    },
+    {
+      "id": "SAFE-M-54",
+      "name": "Cross-Modal Consistency Check",
+      "category": "Detective Control",
+      "effectiveness": "Medium-High",
+      "implementationComplexity": "Medium-High",
+      "firstPublished": "2025-07-01",
+      "description": "Verify consistency between different modalities (text, image, audio) to detect injection attempts where malicious content is hidden in one modality.",
+      "mitigates": ["SAFE-T1110"],
+      "relatedMitigations": ["SAFE-M-51", "SAFE-M-53"]
+    },
+    {
+      "id": "SAFE-M-63",
+      "name": "Technique Name Standardization",
+      "category": "Preventive Control",
+      "effectiveness": "Medium",
+      "implementationComplexity": "Low",
+      "firstPublished": "2025-08-01",
+      "description": "Standardize technique naming conventions for consistent reference across the framework and organizational documentation.",
+      "mitigates": [],
+      "relatedMitigations": []
+    }
+  ],
+  "implementationGuidance": {
+    "defenseInDepth": [
+      "Foundation Layer: Implement architectural defenses (SAFE-M-1, SAFE-M-21) that provide fundamental protection",
+      "Prevention Layer: Add cryptographic controls (SAFE-M-2) and input validation (SAFE-M-4, SAFE-M-5, SAFE-M-22)",
+      "Detection Layer: Deploy monitoring and detection controls (SAFE-M-10, SAFE-M-11, SAFE-M-12)",
+      "Response Layer: Maintain audit logs and incident response procedures"
+    ],
+    "priorityImplementation": {
+      "critical": {
+        "label": "Implement First",
+        "mitigations": ["SAFE-M-1", "SAFE-M-2", "SAFE-M-6", "SAFE-M-11"]
+      },
+      "important": {
+        "label": "Implement Second",
+        "mitigations": ["SAFE-M-3", "SAFE-M-4", "SAFE-M-9", "SAFE-M-13"]
+      },
+      "additional": {
+        "label": "Implement as Resources Allow",
+        "description": "Remaining mitigations based on specific threat model"
+      }
+    }
+  }
+}
