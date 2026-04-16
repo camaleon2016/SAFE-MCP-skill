@@ -172,6 +172,66 @@
           "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string" }, "version": { "type": "string" }, "apiVersion": { "type": "string" } } } } } }
         }
       }
+    },
+    "/v1/discover/stdio": {
+      "post": {
+        "operationId": "discoverAndAnalyzeStdio",
+        "summary": "Discover & analyze MCP server (stdio)",
+        "description": "Connect to a local MCP server via stdio, automatically enumerate all its tools, and run a full SAFE-MCP security analysis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StdioDiscoveryInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Discovery and analysis result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscoveryResult" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/discover/http": {
+      "post": {
+        "operationId": "discoverAndAnalyzeHttp",
+        "summary": "Discover & analyze MCP server (HTTP/SSE)",
+        "description": "Connect to a remote MCP server via HTTP or SSE, automatically enumerate all its tools, and run a full SAFE-MCP security analysis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HttpDiscoveryInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Discovery and analysis result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscoveryResult" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/discover/config": {
+      "post": {
+        "operationId": "discoverAndAnalyzeConfig",
+        "summary": "Discover & analyze from config file",
+        "description": "Parse an MCP client config (Claude Desktop, VS Code, etc.), connect to every server defined in it, enumerate all tools, and run a full architecture-level security analysis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfigDiscoveryInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Config discovery and analysis result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConfigDiscoveryResult" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "security": [{ "apiKey": [] }]
+      }
     }
   },
   "components": {
@@ -332,6 +392,60 @@
           "bySeverity": { "type": "object", "additionalProperties": { "type": "integer" } },
           "mitigationCoverage": { "type": "number" },
           "criticalTechniques": { "type": "array", "items": { "$ref": "#/components/schemas/TechniqueSummary" } }
+        }
+      },
+      "StdioDiscoveryInput": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": { "type": "string", "description": "Command to start the MCP server (e.g., 'node', 'python')" },
+          "args": { "type": "array", "items": { "type": "string" }, "description": "Arguments for the command" },
+          "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Environment variables" },
+          "cwd": { "type": "string", "description": "Working directory" }
+        }
+      },
+      "HttpDiscoveryInput": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "description": "MCP server URL (e.g., 'http://localhost:3001/v1/mcp')" },
+          "headers": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Custom HTTP headers" }
+        }
+      },
+      "ConfigDiscoveryInput": {
+        "type": "object",
+        "required": ["configJson"],
+        "properties": {
+          "configJson": { "type": "string", "description": "The JSON content of an MCP client config file" }
+        }
+      },
+      "DiscoveredServerInfo": {
+        "type": "object",
+        "properties": {
+          "serverName": { "type": "string" },
+          "serverVersion": { "type": "string" },
+          "toolCount": { "type": "integer" },
+          "tools": { "type": "array", "items": { "$ref": "#/components/schemas/ToolDefinition" } }
+        }
+      },
+      "DiscoveryResult": {
+        "type": "object",
+        "properties": {
+          "discovered": { "$ref": "#/components/schemas/DiscoveredServerInfo" },
+          "analysis": { "$ref": "#/components/schemas/AnalysisResult" }
+        }
+      },
+      "ConfigDiscoveryResult": {
+        "type": "object",
+        "properties": {
+          "discovered": {
+            "type": "object",
+            "properties": {
+              "serversFound": { "type": "integer" },
+              "servers": { "type": "array", "items": { "type": "object" } }
+            }
+          },
+          "analysis": { "$ref": "#/components/schemas/AnalysisResult" }
         }
       }
     }

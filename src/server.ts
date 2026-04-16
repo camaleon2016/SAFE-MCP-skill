@@ -17,6 +17,11 @@ import {
   rankMitigationsByImpact,
   getFrameworkStats,
 } from "./engine/analyze.js";
+import {
+  discoverAndAnalyzeStdio,
+  discoverAndAnalyzeHttp,
+  discoverAndAnalyzeConfig,
+} from "./discovery.js";
 
 // ── Server ──────────────────────────────────────────────────────────
 
@@ -311,5 +316,67 @@ server.registerTool(
   async () => {
     const stats = getFrameworkStats();
     return { content: [{ type: "text", text: JSON.stringify(stats, null, 2) }] };
+  },
+);
+
+// ── Discovery Tools ─────────────────────────────────────────────────
+
+server.registerTool(
+  "discover_and_analyze_stdio",
+  {
+    title: "Discover & Analyze MCP Server (stdio)",
+    description:
+      "Connect to a local MCP server via stdio, automatically enumerate all its tools, and run a full SAFE-MCP security analysis. No manual JSON needed — just provide the command to start the server.",
+    inputSchema: {
+      command: z.string().describe("Command to start the MCP server (e.g., 'node', 'python')"),
+      args: z.array(z.string()).optional().describe("Arguments for the command (e.g., ['dist/index.js'])"),
+      env: z.record(z.string(), z.string()).optional().describe("Environment variables for the server process"),
+      cwd: z.string().optional().describe("Working directory for the server process"),
+    },
+  },
+  async ({ command, args, env, cwd }) => {
+    const input: Record<string, unknown> = { command };
+    if (args) input.args = args;
+    if (env) input.env = env;
+    if (cwd) input.cwd = cwd;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await discoverAndAnalyzeStdio(input as any);
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  },
+);
+
+server.registerTool(
+  "discover_and_analyze_http",
+  {
+    title: "Discover & Analyze MCP Server (HTTP/SSE)",
+    description:
+      "Connect to a remote MCP server via HTTP or SSE, automatically enumerate all its tools, and run a full SAFE-MCP security analysis. Provide the server URL — the skill handles the rest.",
+    inputSchema: {
+      url: z.string().describe("MCP server URL (e.g., 'http://localhost:3001/v1/mcp')"),
+      headers: z.record(z.string(), z.string()).optional().describe("Custom HTTP headers (e.g., for authentication)"),
+    },
+  },
+  async ({ url, headers }) => {
+    const input: Record<string, unknown> = { url };
+    if (headers) input.headers = headers;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await discoverAndAnalyzeHttp(input as any);
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  },
+);
+
+server.registerTool(
+  "discover_and_analyze_config",
+  {
+    title: "Discover & Analyze from Config File",
+    description:
+      "Parse an MCP client config (Claude Desktop, VS Code, etc.), connect to every server defined in it, enumerate all tools, and run a full architecture-level SAFE-MCP security analysis across all servers.",
+    inputSchema: {
+      configJson: z.string().describe("The JSON content of the MCP client config file (e.g., claude_desktop_config.json or VS Code settings.json mcp section)"),
+    },
+  },
+  async ({ configJson }) => {
+    const result = await discoverAndAnalyzeConfig({ configJson });
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   },
 );

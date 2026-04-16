@@ -20,6 +20,20 @@ export type {
   RiskSummary,
 } from "./engine/rules.js";
 
+// Re-export discovery for direct use
+export {
+  discoverAndAnalyzeStdio,
+  discoverAndAnalyzeHttp,
+  discoverAndAnalyzeConfig,
+} from "./discovery.js";
+export type {
+  StdioDiscoveryInput,
+  HttpDiscoveryInput,
+  ConfigDiscoveryInput,
+  DiscoveryResult,
+  ConfigDiscoveryResult,
+} from "./discovery.js";
+
 // Default: start MCP stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);

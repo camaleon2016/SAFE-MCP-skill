@@ -20,6 +20,16 @@ import {
   getThreatProfile,
   getFrameworkStats,
 } from "../engine/analyze.js";
+import {
+  discoverAndAnalyzeStdio,
+  discoverAndAnalyzeHttp,
+  discoverAndAnalyzeConfig,
+} from "../discovery.js";
+import type {
+  StdioDiscoveryInput,
+  HttpDiscoveryInput,
+  ConfigDiscoveryInput,
+} from "../discovery.js";
 import type { Severity } from "../types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -151,6 +161,29 @@ const httpServer = createServer(async (req, res) => {
     }
     if (req.method === "GET" && path === "/v1/framework/stats") {
       json(res, 200, getFrameworkStats());
+      return;
+    }
+
+    // ── Discovery endpoints ─────────────────────────────────────
+    if (req.method === "POST" && path === "/v1/discover/stdio") {
+      const body = await readBody(req) as StdioDiscoveryInput;
+      const result = await discoverAndAnalyzeStdio(body);
+      json(res, 200, result);
+      audit("rest_call", { clientIp, toolName: "discover_and_analyze_stdio", duration: Math.round(performance.now() - start) });
+      return;
+    }
+    if (req.method === "POST" && path === "/v1/discover/http") {
+      const body = await readBody(req) as HttpDiscoveryInput;
+      const result = await discoverAndAnalyzeHttp(body);
+      json(res, 200, result);
+      audit("rest_call", { clientIp, toolName: "discover_and_analyze_http", duration: Math.round(performance.now() - start) });
+      return;
+    }
+    if (req.method === "POST" && path === "/v1/discover/config") {
+      const body = await readBody(req) as ConfigDiscoveryInput;
+      const result = await discoverAndAnalyzeConfig(body);
+      json(res, 200, result);
+      audit("rest_call", { clientIp, toolName: "discover_and_analyze_config", duration: Math.round(performance.now() - start) });
       return;
     }
 
