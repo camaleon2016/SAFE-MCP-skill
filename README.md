@@ -1,6 +1,6 @@
 # SAFE-MCP Security Analysis Skill
 
-**You describe a tool, server, or agent setup — the skill tells you what's dangerous about it and how to fix it.**
+**Describe a tool, server, or agent setup — or point it at a running MCP server to auto-discover everything — and the skill tells you what's dangerous and how to fix it.**
 
 A security analysis engine built on the [SAFE-MCP framework](https://github.com/safe-agentic-framework/safe-mcp) that evaluates MCP tool definitions, server configurations, and agent architectures against 85 known attack techniques across 14 MITRE ATT&CK-aligned tactics.
 
@@ -8,7 +8,7 @@ The skill is callable from any agent framework — MCP (stdio or HTTP), OpenAI f
 
 ### How it works
 
-1. **You send** a JSON description of a tool, server, or full agent architecture — or just **point it at a running server** and it auto-discovers everything
+1. **You send** a JSON description of a tool, server, or full agent architecture — or just **point the skill at a running MCP server** (local or remote) and it auto-discovers all tools and configurations for you
 2. **The engine runs 32 rules** that check for prompt injection, credential theft, data exfiltration, command injection, and 28 other attack patterns
 3. **You get back** a risk rating (low → critical), specific findings with MITRE ATT&CK mappings, and actionable mitigations for each issue
 
