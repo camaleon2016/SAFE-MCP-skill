@@ -167,23 +167,35 @@ const httpServer = createServer(async (req, res) => {
     // ── Discovery endpoints ─────────────────────────────────────
     if (req.method === "POST" && path === "/v1/discover/stdio") {
       const body = await readBody(req) as StdioDiscoveryInput;
-      const result = await discoverAndAnalyzeStdio(body);
-      json(res, 200, result);
-      audit("rest_call", { clientIp, toolName: "discover_and_analyze_stdio", duration: Math.round(performance.now() - start) });
+      try {
+        const result = await discoverAndAnalyzeStdio(body);
+        json(res, 200, result);
+        audit("rest_call", { clientIp, toolName: "discover_and_analyze_stdio", duration: Math.round(performance.now() - start) });
+      } catch (discErr) {
+        json(res, 502, { error: "Discovery failed", detail: discErr instanceof Error ? discErr.message : String(discErr) });
+      }
       return;
     }
     if (req.method === "POST" && path === "/v1/discover/http") {
       const body = await readBody(req) as HttpDiscoveryInput;
-      const result = await discoverAndAnalyzeHttp(body);
-      json(res, 200, result);
-      audit("rest_call", { clientIp, toolName: "discover_and_analyze_http", duration: Math.round(performance.now() - start) });
+      try {
+        const result = await discoverAndAnalyzeHttp(body);
+        json(res, 200, result);
+        audit("rest_call", { clientIp, toolName: "discover_and_analyze_http", duration: Math.round(performance.now() - start) });
+      } catch (discErr) {
+        json(res, 502, { error: "Discovery failed", detail: discErr instanceof Error ? discErr.message : String(discErr) });
+      }
       return;
     }
     if (req.method === "POST" && path === "/v1/discover/config") {
       const body = await readBody(req) as ConfigDiscoveryInput;
-      const result = await discoverAndAnalyzeConfig(body);
-      json(res, 200, result);
-      audit("rest_call", { clientIp, toolName: "discover_and_analyze_config", duration: Math.round(performance.now() - start) });
+      try {
+        const result = await discoverAndAnalyzeConfig(body);
+        json(res, 200, result);
+        audit("rest_call", { clientIp, toolName: "discover_and_analyze_config", duration: Math.round(performance.now() - start) });
+      } catch (discErr) {
+        json(res, 502, { error: "Discovery failed", detail: discErr instanceof Error ? discErr.message : String(discErr) });
+      }
       return;
     }
 

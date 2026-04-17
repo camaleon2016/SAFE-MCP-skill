@@ -854,11 +854,19 @@ Each finding includes the same structure as step 3 — technique ID, severity, d
 
 ### Auto-Discovery (no JSON needed)
 
+> **Prerequisite:** Complete steps 1-2 above (start the REST server and verify it's running) before using these endpoints.
+
 Instead of manually writing JSON descriptions, you can point the skill at a running MCP server and it will automatically connect, enumerate all tools, and run the security analysis. Three modes are available:
+
+1. **Stdio** — spawn and analyze a local MCP server process
+2. **HTTP/SSE** — connect to a remote MCP server by URL
+3. **Config file** — parse a `claude_desktop_config.json` or VS Code MCP settings file and analyze every server in it
 
 #### Discover a local (stdio) MCP server
 
-The skill spawns the server process, connects via stdio, calls `tools/list`, and analyzes what it finds. You just provide the command to start the server:
+The skill spawns the server process, connects via stdio, calls `tools/list`, and analyzes what it finds. You just provide the command to start the server.
+
+For this demo, we'll point the skill at **itself** — it's a valid MCP server, so it works out of the box. Replace the `cwd` path with any MCP server on your machine:
 
 ```bash
 curl -X POST http://127.0.0.1:3002/v1/discover/stdio \
@@ -866,21 +874,24 @@ curl -X POST http://127.0.0.1:3002/v1/discover/stdio \
   -d '{
     "command": "node",
     "args": ["dist/index.js"],
-    "cwd": "/path/to/some-mcp-server"
+    "cwd": "'$(pwd)'"
   }'
 ```
+
+> **Note:** `$(pwd)` inserts your current directory. If you're already in the `safe-mcp-skill` folder, this points the discovery at the skill's own MCP server. To analyze a different server, replace the `cwd` value with the absolute path to that server's project root.
 
 <details>
 <summary>Windows alternatives</summary>
 
 **PowerShell:**
 ```powershell
-$body = '{"command":"node","args":["dist/index.js"],"cwd":"C:\\path\\to\\some-mcp-server"}'
+$cwd = (Get-Location).Path -replace '\\', '\\'
+$body = "{`"command`":`"node`",`"args`":[`"dist/index.js`"],`"cwd`":`"$cwd`"}"
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:3002/v1/discover/stdio -ContentType "application/json" -Body $body | ConvertTo-Json -Depth 10
 ```
 **CMD:**
 ```cmd
-curl.exe -X POST http://127.0.0.1:3002/v1/discover/stdio -H "Content-Type: application/json" -d "{\"command\":\"node\",\"args\":[\"dist/index.js\"],\"cwd\":\"C:\\path\\to\\some-mcp-server\"}"
+curl.exe -X POST http://127.0.0.1:3002/v1/discover/stdio -H "Content-Type: application/json" -d "{\"command\":\"node\",\"args\":[\"dist/index.js\"],\"cwd\":\"%cd%\"}"
 ```
 
 </details>
@@ -890,22 +901,38 @@ curl.exe -X POST http://127.0.0.1:3002/v1/discover/stdio -H "Content-Type: appli
 ```json
 {
   "discovered": {
-    "serverName": "some-mcp-server",
+    "serverName": "safe-mcp-skill",
     "serverVersion": "1.0.0",
-    "toolCount": 5,
+    "toolCount": 16,
     "tools": [
-      { "name": "run_query", "description": "Execute SQL queries on the database" },
-      { "name": "read_file", "description": "Read a file from the filesystem" }
+      { "name": "analyze_tool", "description": "Analyze a single MCP tool definition for SAFE-MCP security risks." },
+      { "name": "discover_and_analyze_stdio", "description": "Connect to a local MCP server via stdio, automatically enumerate all its tools, and run a full SAFE-MCP security analysis." }
     ]
   },
   "analysis": {
-    "summary": { "overallRisk": "high", "totalFindings": 4 },
-    "findings": [ ... ]
+    "summary": { "overallRisk": "Critical", "totalFindings": 3 },
+    "findings": [
+      {
+        "ruleId": "RULE-002",
+        "severity": "Critical",
+        "description": "1 server(s) without authentication: safe-mcp-skill"
+      },
+      {
+        "ruleId": "RULE-006",
+        "severity": "Critical",
+        "description": "Tools with shell/exec capabilities: discover_and_analyze_stdio"
+      },
+      {
+        "ruleId": "RULE-024",
+        "severity": "Medium",
+        "description": "16 tools registered — high tool count increases consent-fatigue exploitation risk"
+      }
+    ]
   }
 }
 ```
 
-No manual JSON assembly — the skill discovers everything automatically, then tells you what's dangerous.
+No manual JSON assembly — the skill discovers everything automatically, then tells you what's dangerous. Even the skill analyzing *itself* finds real issues: no authentication, a tool that spawns child processes, and consent fatigue from having 16 tools.
 
 #### Discover a remote (HTTP/SSE) MCP server
 
