@@ -17,6 +17,19 @@ import type {
 
 const CONNECT_TIMEOUT = 30_000;
 
+/** Convert Git-Bash / MSYS2 POSIX paths (e.g. /c/Users/…) to Windows paths. */
+function normalizeCwd(cwd: string): string {
+  if (process.platform === "win32") {
+    const m = /^\/([a-zA-Z])(\/.*)?$/.exec(cwd);
+    if (m) {
+      const drive = m[1]!.toUpperCase();
+      const rest = (m[2] ?? "/").replace(/\//g, "\\");
+      return `${drive}:${rest}`;
+    }
+  }
+  return cwd;
+}
+
 interface DiscoveredServer {
   name: string;
   transport: string;
@@ -92,7 +105,7 @@ export async function discoverAndAnalyzeStdio(
   const stdioParams: Record<string, unknown> = { command: input.command, stderr: "pipe" };
   if (input.args) stdioParams.args = input.args;
   if (input.env) stdioParams.env = input.env;
-  if (input.cwd) stdioParams.cwd = input.cwd;
+  if (input.cwd) stdioParams.cwd = normalizeCwd(input.cwd);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transport = new StdioClientTransport(stdioParams as any);
 
