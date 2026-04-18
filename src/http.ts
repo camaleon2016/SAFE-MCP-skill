@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { server } from "./server.js";
+import { createServer as createMcpServer } from "./server.js";
 import { info, warn, error as logError, audit } from "./governance/logger.js";
 import { checkAccess, getClientIp } from "./governance/access.js";
 
@@ -73,7 +73,8 @@ const httpServer = createServer(async (req, res) => {
               transports.set(id, transport!);
             },
           });
-          await server.connect(transport as unknown as Transport);
+          const srv = createMcpServer();
+          await srv.connect(transport as unknown as Transport);
         }
 
         await transport.handleRequest(req, res, body);

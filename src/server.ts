@@ -25,12 +25,7 @@ import {
 
 // ── Server ──────────────────────────────────────────────────────────
 
-export const server = new McpServer({
-  name: "safe-mcp-skill",
-  version: "1.0.0",
-});
-
-// ── Zod Schemas ─────────────────────────────────────────────────────
+function registerTools(srv: McpServer): void {
 
 const ToolDefinitionSchema = z.object({
   name: z.string().describe("Tool name"),
@@ -73,7 +68,7 @@ const ArchitectureSchema = z.object({
 
 // ── Tools ───────────────────────────────────────────────────────────
 
-server.registerTool(
+srv.registerTool(
   "analyze_architecture",
   {
     title: "Analyze Agent Architecture",
@@ -86,7 +81,7 @@ server.registerTool(
   }),
 );
 
-server.registerTool(
+srv.registerTool(
   "analyze_tool",
   {
     title: "Analyze MCP Tool",
@@ -99,7 +94,7 @@ server.registerTool(
   }),
 );
 
-server.registerTool(
+srv.registerTool(
   "analyze_server",
   {
     title: "Analyze MCP Server",
@@ -112,7 +107,7 @@ server.registerTool(
   }),
 );
 
-server.registerTool(
+srv.registerTool(
   "get_technique",
   {
     title: "Get Technique Details",
@@ -129,7 +124,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_mitigation",
   {
     title: "Get Mitigation Details",
@@ -146,7 +141,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "search_techniques",
   {
     title: "Search Techniques",
@@ -171,7 +166,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "search_mitigations",
   {
     title: "Search Mitigations",
@@ -196,7 +191,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_mitigations_for_technique",
   {
     title: "Get Mitigations for Technique",
@@ -210,7 +205,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_techniques_for_mitigation",
   {
     title: "Get Techniques for Mitigation",
@@ -235,7 +230,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_threat_profile",
   {
     title: "Get Threat Profile",
@@ -249,7 +244,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_unmitigated_techniques",
   {
     title: "Get Unmitigated Techniques",
@@ -274,7 +269,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "rank_mitigations",
   {
     title: "Rank Mitigations by Impact",
@@ -305,7 +300,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "get_framework_stats",
   {
     title: "Get Framework Statistics",
@@ -321,7 +316,7 @@ server.registerTool(
 
 // ── Discovery Tools ─────────────────────────────────────────────────
 
-server.registerTool(
+srv.registerTool(
   "discover_and_analyze_stdio",
   {
     title: "Discover & Analyze MCP Server (stdio)",
@@ -345,7 +340,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "discover_and_analyze_http",
   {
     title: "Discover & Analyze MCP Server (HTTP/SSE)",
@@ -365,7 +360,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+srv.registerTool(
   "discover_and_analyze_config",
   {
     title: "Discover & Analyze from Config File",
@@ -380,3 +375,16 @@ server.registerTool(
     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   },
 );
+}
+
+// ── Exports ─────────────────────────────────────────────────────────
+
+/** Create a fresh McpServer with all tools registered. */
+export function createServer(): McpServer {
+  const srv = new McpServer({ name: "safe-mcp-skill", version: "1.0.0" });
+  registerTools(srv);
+  return srv;
+}
+
+/** Default singleton for stdio and REST usage. */
+export const server = createServer();
