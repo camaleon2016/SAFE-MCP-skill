@@ -936,12 +936,22 @@ No manual JSON assembly — the skill discovers everything automatically, then t
 
 #### Discover a remote (HTTP/SSE) MCP server
 
-Point it at any reachable URL — localhost, LAN IP, or remote hostname — and it connects, negotiates the transport (StreamableHTTP first, falls back to SSE), enumerates tools, and analyzes:
+Point it at any reachable URL — localhost, LAN IP, or remote hostname — and it connects, negotiates the transport (StreamableHTTP first, falls back to SSE), enumerates tools, and analyzes.
+
+For this demo we'll again use the skill itself — start the MCP HTTP transport in a **second terminal**:
+
+```bash
+# In a second terminal (keep the REST server running in the first):
+cd safe-mcp-skill
+npm run start:http        # MCP HTTP on :3001
+```
+
+Then from the original terminal:
 
 ```bash
 curl -X POST http://127.0.0.1:3002/v1/discover/http \
   -H "Content-Type: application/json" \
-  -d '{"url": "http://192.168.1.50:3001/v1/mcp"}'
+  -d '{"url": "http://127.0.0.1:3001/v1/mcp"}'
 ```
 
 <details>
@@ -949,17 +959,17 @@ curl -X POST http://127.0.0.1:3002/v1/discover/http \
 
 **PowerShell:**
 ```powershell
-$body = '{"url":"http://192.168.1.50:3001/v1/mcp"}'
+$body = '{"url":"http://127.0.0.1:3001/v1/mcp"}'
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:3002/v1/discover/http -ContentType "application/json" -Body $body | ConvertTo-Json -Depth 10
 ```
 **CMD:**
 ```cmd
-curl.exe -X POST http://127.0.0.1:3002/v1/discover/http -H "Content-Type: application/json" -d "{\"url\":\"http://192.168.1.50:3001/v1/mcp\"}"
+curl.exe -X POST http://127.0.0.1:3002/v1/discover/http -H "Content-Type: application/json" -d "{\"url\":\"http://127.0.0.1:3001/v1/mcp\"}"
 ```
 
 </details>
 
-The exposed endpoint URL is automatically flagged — if the server has no authentication, the engine catches it.
+> To analyze a remote server, replace the URL with the target's address (e.g. `http://192.168.1.50:3001/v1/mcp`). The exposed endpoint URL is automatically flagged — if the server has no authentication, the engine catches it.
 
 #### Discover all servers from a config file
 
