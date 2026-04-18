@@ -1255,9 +1255,14 @@ If the terminal is unresponsive, close the terminal window directly.
 
 If the server is running in the background and you need to force-stop it:
 
-**Linux / macOS / WSL / Git Bash:**
+**Linux / macOS / WSL:**
 ```bash
 kill $(lsof -t -i:3002)
+```
+
+**Git Bash on Windows:**
+```bash
+taskkill //PID $(netstat -ano | grep ':3002' | grep 'LISTENING' | awk '{print $5}') //F
 ```
 
 **Windows PowerShell:**
