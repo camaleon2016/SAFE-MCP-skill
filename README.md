@@ -523,6 +523,8 @@ safe-mcp-skill/
 ├── plugins/
 │   └── csharp/
 │       └── SafeMcpSkill/            # C# Semantic Kernel plugin
+├── docs/
+│   └── github-mcp-demo.md          # GitHub MCP Server scanning demo
 ├── .github/workflows/ci.yml         # CI pipeline (Node 20 + 22)
 ├── .env.example
 ├── package.json
@@ -594,6 +596,8 @@ The engine runs 32 rules covering:
 This walkthrough sends increasingly complex inputs — a single tool, then a full architecture — and shows how the engine flags real attack patterns like prompt injection, credential theft, and data exfiltration. Each step builds on the previous one.
 
 > **Quick version:** Steps 1-4 are the core demo (start server → health check → analyze a tool → analyze an architecture). The Auto-Discovery section shows how to skip manual JSON entirely. Steps 5-15 cover every remaining endpoint and are collapsed for reference.
+
+> **Real-world example:** Want to scan a production MCP server instead of test data? See the [GitHub MCP Server demo](docs/github-mcp-demo.md) — it auto-discovers and analyzes the official GitHub MCP Server running in Docker.
 
 <details>
 <summary><strong>Which shell am I using?</strong></summary>
