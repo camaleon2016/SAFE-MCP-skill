@@ -21,6 +21,10 @@ import {
   getFrameworkStats,
 } from "../engine/analyze.js";
 import {
+  getMappings,
+  getCoverage,
+} from "../mappings/index.js";
+import {
   discoverAndAnalyzeStdio,
   discoverAndAnalyzeHttp,
   discoverAndAnalyzeConfig,
@@ -161,6 +165,21 @@ const httpServer = createServer(async (req, res) => {
     }
     if (req.method === "GET" && path === "/v1/framework/stats") {
       json(res, 200, getFrameworkStats());
+      return;
+    }
+
+    // ── Mapping endpoints ────────────────────────────────────────
+    const mappingMatch = path.match(/^\/v1\/mappings\/(.+)$/);
+    if (req.method === "GET" && mappingMatch) {
+      const id = decodeURIComponent(mappingMatch[1]!);
+      json(res, 200, getMappings(id));
+      return;
+    }
+    if (req.method === "POST" && path === "/v1/coverage") {
+      const body = await readBody(req) as { techniqueIds: string[] };
+      const ids = Array.isArray(body?.techniqueIds) ? body.techniqueIds : [];
+      json(res, 200, getCoverage(ids));
+      audit("rest_call", { clientIp, toolName: "get_framework_coverage", duration: Math.round(performance.now() - start) });
       return;
     }
 

@@ -1,4 +1,7 @@
 import type { Technique, Mitigation, Severity } from "../types.js";
+import type { FrameworkMappings } from "../mappings/index.js";
+import { getMappings, getCoverage } from "../mappings/index.js";
+import type { FrameworkCoverage } from "../mappings/index.js";
 import {
   getTechnique,
   getMitigation,
@@ -54,6 +57,7 @@ export interface Finding {
   description: string;
   evidence: string;
   mitigations: { id: string; name: string; effectiveness: string }[];
+  mappings: FrameworkMappings;
 }
 
 export interface RiskSummary {
@@ -68,6 +72,7 @@ export interface AnalysisResult {
   target: string;
   summary: RiskSummary;
   findings: Finding[];
+  frameworkCoverage: FrameworkCoverage[];
 }
 
 // ── Rule Definitions ────────────────────────────────────────────────
@@ -95,6 +100,7 @@ function buildFinding(rule: Rule, evidence: string): Finding | null {
     description: technique.description,
     evidence,
     mitigations,
+    mappings: getMappings(rule.techniqueId),
   };
 }
 
@@ -732,6 +738,8 @@ export function analyzeArchitecture(input: AgentArchitecture): AnalysisResult {
     bySeverity[f.severity] = (bySeverity[f.severity] ?? 0) + 1;
   }
 
+  const techniqueIds = findings.map((f) => f.technique.id);
+
   return {
     timestamp: new Date().toISOString(),
     target: input.name ?? "unnamed-architecture",
@@ -742,6 +750,7 @@ export function analyzeArchitecture(input: AgentArchitecture): AnalysisResult {
       coverageScore: computeCoverageScore(findings),
     },
     findings,
+    frameworkCoverage: getCoverage(techniqueIds),
   };
 }
 
