@@ -18,6 +18,10 @@ import {
   getFrameworkStats,
 } from "./engine/analyze.js";
 import {
+  getMappings,
+  getCoverage,
+} from "./mappings/index.js";
+import {
   discoverAndAnalyzeStdio,
   discoverAndAnalyzeHttp,
   discoverAndAnalyzeConfig,
@@ -374,6 +378,36 @@ srv.registerTool(
     const result = await discoverAndAnalyzeConfig({ configJson });
     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   },
+);
+
+srv.registerTool(
+  "get_finding_mappings",
+  {
+    title: "Get Framework Mappings for a Technique",
+    description:
+      "Given a SAFE-MCP technique ID, return its cross-references to STRIDE, MITRE ATLAS, OWASP LLM Top 10 (2025), and NIST AI RMF.",
+    inputSchema: {
+      techniqueId: z.string().describe("SAFE-MCP technique ID (e.g. SAFE-T1001)"),
+    },
+  },
+  async ({ techniqueId }) => ({
+    content: [{ type: "text", text: JSON.stringify(getMappings(techniqueId), null, 2) }],
+  }),
+);
+
+srv.registerTool(
+  "get_framework_coverage",
+  {
+    title: "Get Framework Coverage Summary",
+    description:
+      "Given a list of SAFE-MCP technique IDs (from analysis findings), return coverage summaries across STRIDE, MITRE ATLAS, OWASP LLM Top 10, and NIST AI RMF.",
+    inputSchema: {
+      techniqueIds: z.array(z.string()).describe("Array of SAFE-MCP technique IDs"),
+    },
+  },
+  async ({ techniqueIds }) => ({
+    content: [{ type: "text", text: JSON.stringify(getCoverage(techniqueIds), null, 2) }],
+  }),
 );
 }
 

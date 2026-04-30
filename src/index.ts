@@ -20,6 +20,17 @@ export type {
   RiskSummary,
 } from "./engine/rules.js";
 
+// Re-export mappings for direct use
+export { getMappings, getCoverage, STRIDE_LABELS } from "./mappings/index.js";
+export type {
+  FrameworkMappings,
+  FrameworkCoverage,
+  StrideCategory,
+  AtlasRef,
+  OwaspLlmRef,
+  NistAiRmfRef,
+} from "./mappings/index.js";
+
 // Re-export discovery for direct use
 export {
   discoverAndAnalyzeStdio,
