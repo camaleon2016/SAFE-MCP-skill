@@ -10,7 +10,7 @@ The skill is callable from any agent framework — MCP (stdio or HTTP), OpenAI f
 
 1. **You send** a JSON description of a tool, server, or full agent architecture — or just **point the skill at a running MCP server** (local or remote) and it auto-discovers all tools and configurations for you
 2. **The engine runs 32 rules** that check for prompt injection, credential theft, data exfiltration, command injection, and 28 other attack patterns
-3. **You get back** a risk rating (low → critical), specific findings with MITRE ATT&CK mappings, and actionable mitigations for each issue
+3. **You get back** a risk rating (low → critical), specific findings with cross-references to STRIDE, MITRE ATLAS, OWASP LLM Top 10, and NIST AI RMF, plus actionable mitigations for each issue
 
 ## Prerequisites
 
@@ -351,6 +351,8 @@ Endpoints:
 | GET | `/v1/mitigations?q=` | Search mitigations |
 | GET | `/v1/threat-profile` | Threat landscape summary |
 | GET | `/v1/framework/stats` | Framework statistics |
+| GET | `/v1/mappings/{id}` | STRIDE, ATLAS, OWASP LLM, NIST AI RMF mappings for a technique |
+| POST | `/v1/coverage` | Framework coverage summary for a set of technique IDs |
 | GET | `/v1/openapi.json` | OpenAPI 3.1 spec |
 | GET | `/health` | Health check |
 
@@ -512,11 +514,18 @@ safe-mcp-skill/
 │   ├── openapi/
 │   │   ├── openapi.json             # OpenAPI 3.1 specification
 │   │   └── serve.ts                 # REST API server
+│   ├── mappings/
+│   │   ├── types.ts                 # Mapping type definitions
+│   │   ├── stride.ts                # STRIDE threat category mapping
+│   │   ├── owasp-llm.ts             # OWASP LLM Top 10 (2025) mapping
+│   │   ├── atlas.ts                 # MITRE ATLAS v5.5 mapping
+│   │   ├── nist-ai-rmf.ts           # NIST AI RMF mapping
+│   │   └── index.ts                 # Unified mapping lookup + coverage
 │   ├── tests/
 │   │   └── redteam.ts               # 34 red-team test cases
 │   ├── types.ts                     # TypeScript type definitions
 │   ├── discovery.ts                 # Auto-discovery via stdio, HTTP, or config
-│   ├── server.ts                    # MCP server (16 tools)
+│   ├── server.ts                    # MCP server (18 tools)
 │   ├── http.ts                      # MCP HTTP transport
 │   ├── openai.ts                    # OpenAI function definitions
 │   └── index.ts                     # Stdio entry point + re-exports
@@ -533,7 +542,7 @@ safe-mcp-skill/
 
 ## MCP Tools
 
-The skill exposes 16 tools over MCP:
+The skill exposes 18 tools over MCP:
 
 | Tool | Description |
 |---|---|
@@ -553,6 +562,8 @@ The skill exposes 16 tools over MCP:
 | `get_unmitigated_techniques` | Find techniques without mitigations |
 | `rank_mitigations` | Rank mitigations by coverage impact |
 | `get_framework_stats` | Framework statistics |
+| `get_finding_mappings` | Get STRIDE, ATLAS, OWASP LLM, NIST AI RMF mappings for a technique |
+| `get_framework_coverage` | Get framework coverage summary for a set of technique IDs |
 
 ## Rules Engine
 
@@ -728,7 +739,13 @@ curl.exe -X POST http://127.0.0.1:3002/v1/analyze/tool -H "Content-Type: applica
       "technique": "SAFE-T1001",
       "title": "Tool Poisoning Attack",
       "description": "Tool description contains injected instructions that could manipulate agent behavior",
-      "mitigations": ["SAFE-M-1", "SAFE-M-2", "SAFE-M-6"]
+      "mitigations": ["SAFE-M-1", "SAFE-M-2", "SAFE-M-6"],
+      "mappings": {
+        "stride": ["T", "S"],
+        "atlas": [{ "id": "AML.T0110", "name": "AI Agent Tool Poisoning" }],
+        "owaspLlm": [{ "id": "LLM01", "name": "Prompt Injection" }],
+        "nistAiRmf": [{ "id": "GOVERN-1.2", "function": "GOVERN" }]
+      }
     },
     {
       "ruleId": "RULE-006",
@@ -736,7 +753,13 @@ curl.exe -X POST http://127.0.0.1:3002/v1/analyze/tool -H "Content-Type: applica
       "technique": "SAFE-T1101",
       "title": "Command Injection via Shell Tools",
       "description": "Tool enables arbitrary shell command execution — attackers can pivot to the host OS",
-      "mitigations": ["SAFE-M-8", "SAFE-M-13"]
+      "mitigations": ["SAFE-M-8", "SAFE-M-13"],
+      "mappings": {
+        "stride": ["E", "T"],
+        "atlas": [{ "id": "AML.T0053", "name": "AI Agent Tool Invocation" }],
+        "owaspLlm": [{ "id": "LLM05", "name": "Improper Output Handling" }],
+        "nistAiRmf": [{ "id": "MEASURE-2.6", "function": "MEASURE" }]
+      }
     },
     {
       "ruleId": "RULE-027",
@@ -744,8 +767,20 @@ curl.exe -X POST http://127.0.0.1:3002/v1/analyze/tool -H "Content-Type: applica
       "technique": "SAFE-T1603",
       "title": "System Prompt Disclosure",
       "description": "Prompt override pattern detected in tool description ('Ignore previous instructions...')",
-      "mitigations": ["SAFE-M-6", "SAFE-M-31"]
+      "mitigations": ["SAFE-M-6", "SAFE-M-31"],
+      "mappings": {
+        "stride": ["I"],
+        "atlas": [{ "id": "AML.T0054", "name": "LLM Jailbreak" }],
+        "owaspLlm": [{ "id": "LLM07", "name": "System Prompt Leakage" }],
+        "nistAiRmf": [{ "id": "GOVERN-1.2", "function": "GOVERN" }]
+      }
     }
+  ],
+  "frameworkCoverage": [
+    { "framework": "STRIDE", "totalMapped": 3 },
+    { "framework": "OWASP LLM Top 10 (2025)", "totalMapped": 3 },
+    { "framework": "MITRE ATLAS", "totalMapped": 3 },
+    { "framework": "NIST AI RMF", "totalMapped": 3 }
   ]
 }
 ```
@@ -907,7 +942,7 @@ curl.exe -X POST http://127.0.0.1:3002/v1/discover/stdio -H "Content-Type: appli
   "discovered": {
     "serverName": "safe-mcp-skill",
     "serverVersion": "1.0.0",
-    "toolCount": 16,
+    "toolCount": 18,
     "tools": [
       { "name": "analyze_tool", "description": "Analyze a single MCP tool definition for SAFE-MCP security risks." },
       { "name": "discover_and_analyze_stdio", "description": "Connect to a local MCP server via stdio, automatically enumerate all its tools, and run a full SAFE-MCP security analysis." }
@@ -929,14 +964,14 @@ curl.exe -X POST http://127.0.0.1:3002/v1/discover/stdio -H "Content-Type: appli
       {
         "ruleId": "RULE-024",
         "severity": "Medium",
-        "description": "16 tools registered — high tool count increases consent-fatigue exploitation risk"
+        "description": "18 tools registered — high tool count increases consent-fatigue exploitation risk"
       }
     ]
   }
 }
 ```
 
-No manual JSON assembly — the skill discovers everything automatically, then tells you what's dangerous. Even the skill analyzing *itself* finds real issues: no authentication, a tool that spawns child processes, and consent fatigue from having 16 tools.
+No manual JSON assembly — the skill discovers everything automatically, then tells you what's dangerous. Even the skill analyzing *itself* finds real issues: no authentication, a tool that spawns child processes, and consent fatigue from having 18 tools.
 
 #### Discover a remote (HTTP/SSE) MCP server
 

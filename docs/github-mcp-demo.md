@@ -146,8 +146,20 @@ The response has two sections:
       "technique": { "id": "SAFE-T1101", "name": "..." },
       "description": "...",
       "evidence": "Tool 'run_command' ...",
-      "mitigations": [...]
+      "mitigations": [...],
+      "mappings": {
+        "stride": ["E", "T"],
+        "atlas": [{ "id": "AML.T0053", "name": "AI Agent Tool Invocation" }],
+        "owaspLlm": [{ "id": "LLM05", "name": "Improper Output Handling" }],
+        "nistAiRmf": [{ "id": "MEASURE-2.6", "function": "MEASURE" }]
+      }
     }
+  ],
+  "frameworkCoverage": [
+    { "framework": "STRIDE", "totalMapped": 5 },
+    { "framework": "OWASP LLM Top 10 (2025)", "totalMapped": 5 },
+    { "framework": "MITRE ATLAS", "totalMapped": 5 },
+    { "framework": "NIST AI RMF", "totalMapped": 5 }
   ]
 }
 ```
