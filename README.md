@@ -533,7 +533,11 @@ safe-mcp-skill/
 │   └── csharp/
 │       └── SafeMcpSkill/            # C# Semantic Kernel plugin
 ├── docs/
-│   └── github-mcp-demo.md          # GitHub MCP Server scanning demo
+│   ├── github-mcp-demo.md          # GitHub MCP Server scanning demo
+│   ├── stride-reference.md          # STRIDE threat model reference
+│   ├── owasp-llm-reference.md       # OWASP LLM Top 10 (2025) reference
+│   ├── nist-ai-rmf-reference.md     # NIST AI RMF reference
+│   └── LLMAll_en-US_FINAL.pdf       # OWASP LLM Top 10 full document
 ├── .github/workflows/ci.yml         # CI pipeline (Node 20 + 22)
 ├── .env.example
 ├── package.json
@@ -564,6 +568,19 @@ The skill exposes 18 tools over MCP:
 | `get_framework_stats` | Framework statistics |
 | `get_finding_mappings` | Get STRIDE, ATLAS, OWASP LLM, NIST AI RMF mappings for a technique |
 | `get_framework_coverage` | Get framework coverage summary for a set of technique IDs |
+
+## Framework Reference Documentation
+
+Every finding includes cross-references to four external security frameworks. Reference guides for each are available in the `docs/` folder:
+
+| Framework | Reference Doc | Description |
+|---|---|---|
+| **STRIDE** | [docs/stride-reference.md](docs/stride-reference.md) | Microsoft's 6-category threat classification model (Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation of Privilege) |
+| **OWASP LLM Top 10 (2025)** | [docs/owasp-llm-reference.md](docs/owasp-llm-reference.md) | The 10 most critical security risks for LLM applications (LLM01–LLM10) |
+| **NIST AI RMF** | [docs/nist-ai-rmf-reference.md](docs/nist-ai-rmf-reference.md) | NIST's AI Risk Management Framework — GOVERN, MAP, MEASURE, MANAGE functions |
+| **OWASP LLM Top 10 (full PDF)** | [docs/LLMAll_en-US_FINAL.pdf](docs/LLMAll_en-US_FINAL.pdf) | Complete OWASP LLM Top 10 2025 document |
+
+> **MITRE ATLAS** mappings use technique IDs from [ATLAS v5.5](https://atlas.mitre.org/) directly. No separate reference doc is needed — look up any `AML.T*` ID at [atlas.mitre.org/techniques](https://atlas.mitre.org/techniques).
 
 ## Rules Engine
 
