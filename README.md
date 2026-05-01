@@ -1341,3 +1341,14 @@ npm run dev:rest        # REST API with ts-node
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE) for details.
+
+## References
+
+Framework reference documentation used by the multi-framework mapping layer:
+
+| Framework | Document |
+|---|---|
+| **STRIDE** | [STRIDE Threat Model.md](docs/STRIDE%20Threat%20Model.md) |
+| **OWASP LLM Top 10 (2025)** | [LLMAll_en-US_FINAL.pdf](docs/LLMAll_en-US_FINAL.pdf) |
+| **NIST AI RMF** | [NIST.AI.100-1.pdf](docs/NIST.AI.100-1.pdf) |
+| **MITRE ATLAS** | [atlas.mitre.org](https://atlas.mitre.org/) |
