@@ -1352,3 +1352,7 @@ Framework reference documentation used by the multi-framework mapping layer:
 | **OWASP LLM Top 10 (2025)** | [LLMAll_en-US_FINAL.pdf](docs/LLMAll_en-US_FINAL.pdf) |
 | **NIST AI RMF** | [NIST.AI.100-1.pdf](docs/NIST.AI.100-1.pdf) |
 | **MITRE ATLAS** | [atlas.mitre.org](https://atlas.mitre.org/) |
+
+## Author
+
+* **Jautau "Jay" White** - [@camaleon2016](https://github.com/camaleon2016)
